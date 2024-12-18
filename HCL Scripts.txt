@@ -1,0 +1,742 @@
+     
+    Launch a windows instance using hcl script:
+
+             vi WindowsEc2.tf
+
+provider "aws"{
+profile="terraform_user"
+access_key="AKIATG6MGP3XLRZYI7DZ"
+secret_key="V4FBePcbNiU2FFDPCyL7Pn1k/mvzw9cOA4pEOtX6"
+region="ap-south-1"
+}
+
+resource "aws_instance" "example"{
+ami="ami-070198ebf4affc3e7"
+tags={
+Name="windowsEC2"
+}
+instance_type="t2.micro"
+key_name="terraform-windows"
+security_groups=["${aws_security_group.allow_rdp.name}"]
+}
+
+resource "aws_security_group" "allow_rdp"{
+name="allow_rdp"
+description="allow rdp traffic"
+
+ingress{
+from_port=3389
+to_port=3389
+protocol="tcp"
+
+cidr_blocks=["0.0.0.0/0"]
+}
+}
+
+The Terraform configuration you've provided defines an AWS infrastructure setup with the following resources:
+
+1. **AWS Provider Configuration**:
+   - You're configuring AWS as the cloud provider using your `terraform_user` profile.
+   - The `access_key` and `secret_key` are specified for authentication, although it's a security best practice to avoid hardcoding sensitive information like AWS keys directly in your Terraform configuration. Consider using environment variables or the AWS credentials file for improved security.
+   - The region is set to `ap-south-1` (Mumbai, India).
+
+2. **AWS Instance (`aws_instance`) Resource**:
+   - An EC2 instance is created with an AMI ID `ami-070198ebf4affc3e7` (which you would need to verify corresponds to the desired Windows AMI).
+   - The instance will have the tag `Name="windowsEC2"`.
+   - It uses an instance type of `t2.micro`, which is eligible for the AWS Free Tier.
+   - The key pair `terraform-windows` will be used for SSH or RDP access, assuming you have already created the key pair in AWS.
+   - The security group `aws_security_group.allow_rdp` is applied, enabling access through RDP (port 3389).
+
+3. **AWS Security Group (`aws_security_group`) Resource**:
+   - A security group is defined to allow incoming traffic on port 3389, which is used for RDP.
+   - The `cidr_blocks=["0.0.0.0/0"]` configuration allows access from any IP address, which is not recommended in a production environment for security reasons. It is safer to restrict access to specific IP addresses or ranges.
+
+### Recommendations and Security Improvements:
+
+1. **Sensitive Data (AWS Access Keys)**:
+   - Avoid hardcoding sensitive data such as `access_key` and `secret_key` in the Terraform configuration. Use AWS IAM roles (if running from EC2) or environment variables instead. You can use the AWS credentials file (`~/.aws/credentials`) as a better approach.
+   - Example for using environment variables:
+     ```bash
+     export AWS_ACCESS_KEY_ID=AKIATG6MGP3XLRZYI7DZ
+     export AWS_SECRET_ACCESS_KEY=V4FBePcbNiU2FFDPCyL7Pn1k/mvzw9cOA4pEOtX6
+     ```
+   - Example for using IAM roles (if running from an EC2 instance):
+     ```hcl
+     provider "aws" {
+       region = "ap-south-1"
+     }
+     ```
+
+2. **Security Group**:
+   - Allowing access to port 3389 from `0.0.0.0/0` is a security risk. It would be better to limit access to specific IP ranges (for example, your home or office IP).
+   - Example restricting access to a specific IP:
+     ```hcl
+     ingress {
+       from_port   = 3389
+       to_port     = 3389
+       protocol    = "tcp"
+       cidr_blocks = ["your-ip-address/32"]
+     }
+     ```
+
+3. **Instance Type**:
+   - The `t2.micro` instance is part of the AWS Free Tier, but keep in mind it may not be sufficient for production workloads. For more resources, you might want to adjust the `instance_type`.
+
+4. **RDP Access**:
+   - Ensure that you have created the RDP key (`terraform-windows`) before applying this configuration and that it is stored locally for SSH or RDP access.
+
+After making these adjustments, you can run the following Terraform commands to deploy your resources:
+
+```bash
+terraform init    # Initialize Terraform
+terraform plan    # Preview the changes
+terraform apply   # Apply the configuration
+```
+===================================================================================================================
+
+ amazlinux id: ami-0fd05997b4dff7aac
+
+Launch a Linux instance using hcl script:
+
+             vi LinuxEc2.tf
+
+provider "aws"{
+profile="terraform_user"
+access_key="AKIATG6MGP3XLRZYI7DZ"
+secret_key="V4FBePcbNiU2FFDPCyL7Pn1k/mvzw9cOA4pEOtX6"
+region="ap-south-1"
+}
+
+resource "aws_instance" "example"{
+ami="ami-0fd05997b4dff7aac"
+tags={
+Name="Linux-instance"
+}
+instance_type="t2.micro"
+key_name="terraform-linux"
+security_groups=["${aws_security_group.allow_ssh.name}"]
+}
+
+resource "aws_security_group" "allow_ssh"{
+name="allow_ssh"
+description="allow ssh traffic"
+
+ingress{
+from_port=22
+to_port=22
+protocol="tcp"
+
+cidr_blocks=["0.0.0.0/0"]
+}
+}
+
+Your Terraform configuration for provisioning an AWS EC2 instance with SSH access looks mostly correct, but there are a few security concerns that need to be addressed. Here are some considerations and improvements:
+
+1. **Sensitive Information**: Your `access_key` and `secret_key` are included in the configuration, which is a security risk. **Never hard-code your AWS credentials in the configuration file**. Instead, use the following approaches:
+   - Use environment variables: `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`.
+   - Use an AWS credentials file (`~/.aws/credentials`), or
+   - Use IAM roles (if you're running on an EC2 instance).
+
+2. **Security Group**: Allowing SSH access from `0.0.0.0/0` is dangerous because it opens up SSH access from anywhere. It's a good practice to limit the IP range (e.g., your office IP, VPN, or other trusted sources).
+
+3. **AMI and Instance Type**: Make sure the `ami` ID (`ami-0fd05997b4dff7aac`) corresponds to a valid Linux image in your region, and that the instance type (`t2.micro`) meets your requirements.
+
+4. **Key Pair**: Ensure that the `key_name` (`terraform-linux`) corresponds to an actual SSH key pair in AWS.
+
+Here is an updated version of your Terraform configuration:
+
+```hcl
+provider "aws" {
+  profile = "terraform_user"
+  region  = "ap-south-1"
+}
+
+resource "aws_security_group" "allow_ssh" {
+  name        = "allow_ssh"
+  description = "Allow SSH traffic"
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["<YOUR_TRUSTED_IP>/32"]  # Use a trusted IP address here (e.g., your office IP)
+  }
+}
+
+resource "aws_instance" "example" {
+  ami           = "ami-0fd05997b4dff7aac"  # Ensure this AMI is valid for your region
+  instance_type = "t2.micro"
+  key_name      = "terraform-linux"
+
+  tags = {
+    Name = "Linux-instance"
+  }
+
+  security_groups = [aws_security_group.allow_ssh.name]
+}
+```
+
+### Key Changes:
+1. **AWS Credentials**: Do not hard-code the `access_key` and `secret_key`. Use IAM roles or environment variables.
+2. **Security Group**: I've changed the `cidr_blocks` to `"<YOUR_TRUSTED_IP>/32"`. Replace `<YOUR_TRUSTED_IP>` with the IP you want to allow SSH access from.
+3. **Security Best Practices**: Always limit access to your EC2 instances to trusted IPs for better security.
+
+If you're running Terraform locally, make sure your AWS credentials are configured correctly (either through environment variables or the AWS credentials file).
+
+Why use the -out option?
+Using -out saves the execution plan to a file, so when you run terraform apply, Terraform will apply the exact same changes it showed during the plan phase. Without using -out, there's a possibility that the state could change between plan and apply, resulting in unintended changes.
+
+How to use -out option:
+Generate the Plan and Save it: When you run terraform plan, use the -out option to save the plan to a file (e.g., plan.out):
+
+bash
+Copy code
+terraform plan -out=plan.out
+Apply the Plan: After generating and saving the plan, you can apply it using:
+
+bash
+Copy code
+terraform apply plan.out
+By using the -out option, you ensure that Terraform will apply the exact changes it has planned and prevent any potential discrepancies due to state changes.
+
+Full Example:
+bash
+Copy code
+terraform plan -out=plan.out
+terraform apply plan.out
+This guarantees that the actions Terraform will apply are exactly those that were previewed.
+
+===========================================================================================================================
+
+ launching multiple instances:
+
+provider "aws"{
+profile="terraform_user"
+access_key="AKIATG6MGP3XLRZYI7DZ"
+secret_key="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"
+region="ap-south-1"
+}
+
+variable "different_name"{
+type=list
+default=["web-server", "db-server", "giri-server", "satish-server"]
+}
+
+resource "aws_instance" "example"{
+ami="ami-0fd05997b4dff7aac"
+tags={
+Name=var.different_name[count.index]
+}
+instance_type="t2.micro"
+count=4
+key_name="terraform-linux"
+security_groups=["${aws_security_group.allow_ssh.name}"]
+}
+
+resource "aws_security_group" "allow_ssh"{
+name="allow_ssh"
+description="allow ssh traffic"
+
+ingress{
+from_port=22
+to_port=22
+protocol="tcp"
+
+cidr_blocks=["0.0.0.0/0"]
+}
+}
+
+======================================================================================================
+
+ creat a (webserver.tf)
+
+
+provider "aws" {
+  profile = "terraform_user"
+  access_key="AKIATG6MGP3XLRZYI7DZ"
+  secret_key="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"
+  region  = "ap-south-1"
+}
+
+# EC2 Instance resource
+resource "aws_instance" "linux" {
+  ami           = "ami-0fd05997b4dff7aac"
+  instance_type = "t2.micro"
+  key_name      = "terraform-linux"
+  tags = {
+    Name = "Linux-instance"
+  }
+
+  # Referencing the security group by its ID
+  security_groups = [aws_security_group.allow_ssh_http.name]
+
+  # User data script
+  user_data = file("script.sh")
+}
+
+# Security Group resource
+resource "aws_security_group" "allow_ssh_http" {
+  name        = "allow_ssh_httpd"
+  description = "Allow SSH & HTTP traffic"
+
+  tags = {
+    Name = "allow_SSH_HTTP"
+  }
+
+  # Ingress rule for SSH
+  ingress {
+    description = "Allow SSH"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Ingress rule for HTTP
+  ingress {
+    description = "Allow HTTP"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Egress rule
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+The Terraform configuration you've provided defines the resources needed to launch an AWS EC2 instance (a Linux instance) with SSH and HTTP access. Let's break down your configuration:
+
+### 1. AWS Provider Configuration:
+```hcl
+provider "aws" {
+  profile = "terraform_user"
+  access_key = "AKIATG6MGP3XLRZYI7DZ"
+  secret_key = "V4FBePcbNiU2FFDPCyL7Pn1k/mvzw9cOA4pEOtX6"
+  region = "ap-south-1"
+}
+```
+- **profile**: AWS credentials profile (ensure that the profile `terraform_user` is properly set up in your AWS credentials).
+- **access_key & secret_key**: AWS access keys, typically generated from IAM (though it’s safer to use IAM roles or environment variables to avoid hardcoding sensitive credentials).
+- **region**: The AWS region where your resources will be created (`ap-south-1`).
+
+### 2. EC2 Instance Configuration:
+```hcl
+resource "aws_instance" "linux" {
+  ami = "ami-0fd05997b4dff7aac"
+  tags = {
+    Name = "Linux-instance"
+  }
+  instance_type = "t2.micro"
+  key_name = "terraform-linux"
+  security_groups = ["${aws_security_group.allow_ssh_http.name}"]
+  user_data = file("script.sh")
+}
+```
+- **ami**: Amazon Machine Image ID for the instance. Replace it with the appropriate image for your desired Linux distribution.
+- **tags**: The instance will be tagged with `Name = Linux-instance`.
+- **instance_type**: The type of EC2 instance to launch (`t2.micro` is typically eligible for the AWS free tier).
+- **key_name**: The key pair to access the instance (make sure `terraform-linux` exists in your AWS account).
+- **security_groups**: This links the EC2 instance to the security group you defined.
+- **user_data**: This points to a file `script.sh` that will be executed when the instance is launched. This could contain any initial setup or commands you want the instance to run (e.g., installing software, configuring the system).
+
+### 3. Security Group Configuration:
+```hcl
+resource "aws_security_group" "allow_ssh_http" {
+  tags = {
+    Name = "allow_SSH_HTTP"
+  }
+  name = "allow_ssh_httpd"
+  description = "allow ssh & http traffic"
+
+  ingress {
+    description = "allow ssh"
+    from_port = 22
+    to_port = 22
+    protocol = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "allow httpd"
+    from_port = 80
+    to_port = 80
+    protocol = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port = 0
+    to_port = 0
+    protocol = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+```
+- **ingress**: These rules define inbound traffic allowed:
+  - **SSH (port 22)**: Allows all IPs (`0.0.0.0/0`) to connect via SSH.
+  - **HTTP (port 80)**: Allows all IPs to access the web server.
+  
+- **egress**: The outbound traffic is allowed for all destinations (`0.0.0.0/0`).
+
+### Issues and Considerations:
+1. **Sensitive Data Exposure**: You should never hardcode your `access_key` and `secret_key` in your Terraform configuration. It's safer to use environment variables or IAM roles if running on AWS EC2.
+   
+2. **Key Pair**: Ensure the key pair (`terraform-linux`) is available in the specified region (`ap-south-1`) to allow SSH access to the instance.
+
+3. **User Data Script**: Ensure the `script.sh` file is present and has the correct permissions and content. It will execute when the instance launches.
+
+4. **Security Group**: The security group you defined opens SSH and HTTP ports, but be cautious with allowing `0.0.0.0/0` as the source for these ports, especially for SSH. This could expose your server to unauthorized access. It is generally better to restrict SSH to trusted IPs.
+
+5. **Resource Naming**: Ensure that the names of the security group and instance (`allow_ssh_http` and `Linux-instance`) fit within your naming conventions, and are unique if necessary.
+
+---
+
+### Example for Improved Credential Management:
+Instead of hardcoding the AWS keys, you could use environment variables like this:
+
+```bash
+export AWS_ACCESS_KEY_ID="AKIATG6MGP3XLRZYI7DZ"
+export AWS_SECRET_ACCESS_KEY="V4FBePcbNiU2FFDPCyL7Pn1k/mvzw9cOA4pEOtX6"
+```
+
+And remove those keys from the provider block in your Terraform configuration.
+
+======================================================================================================
+
+                               OUTPUT BLOCK:
+
+provider "aws" {
+  profile    = "terraform_user"
+  access_key = "AKIATG6MGP3XLRZYI7DZ"
+  secret_key = "V4FBePcbNiU2FFDPCyL7Pn1k/mvzw9cOA4pEOtX6"
+  region     = "ap-south-1"
+}
+
+resource "aws_security_group" "example_sg" {
+  name        = "example_security_group"
+  description = "Allow SSH and HTTP access"
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_instance" "example_instance" {
+  ami             = "ami-0fd05997b4dff7aac"
+  instance_type   = "t2.micro"
+  key_name        = "terraform-linux"
+  count           = 1
+  vpc_security_group_ids = [aws_security_group.example_sg.id]
+
+  root_block_device {
+    volume_size = 8
+    volume_type = "gp2"
+  }
+
+  tags = {
+    Name = "ExampleInstance"
+  }
+}
+
+output "instance_public_ip" {
+  description = "The public IP address of the EC2 instance"
+  value       = aws_instance.example_instance[0].public_ip
+}
+
+output "instance_private_ip" {
+  description = "The private IP address of the EC2 instance"
+  value       = aws_instance.example_instance[0].private_ip
+}
+
+
+This Terraform configuration defines resources for provisioning an EC2 instance and an associated security group on AWS. Below is an explanation of each section:
+
+### Provider Configuration
+```hcl
+provider "aws" {
+  profile    = "terraform_user"
+  access_key = "AKIATG6MGP3XLRZYI7DZ"
+  secret_key = "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"
+  region     = "ap-south-1"
+}
+```
+- This block sets up the AWS provider to interact with AWS services using the `terraform_user` profile, along with the specified `access_key` and `secret_key`.
+- The `region` is set to `ap-south-1`, which corresponds to the AWS region in Mumbai, India.
+
+### Security Group Resource
+```hcl
+resource "aws_security_group" "example_sg" {
+  name        = "example_security_group"
+  description = "Allow SSH and HTTP access"
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+```
+- This resource defines a security group (`example_sg`) that allows:
+  - **SSH (port 22)**: Inbound TCP traffic from any IP (`0.0.0.0/0`).
+  - **HTTP (port 80)**: Inbound TCP traffic from any IP.
+  - **All outbound traffic**: The `egress` rule allows all outbound traffic to any destination.
+
+### EC2 Instance Resource
+```hcl
+resource "aws_instance" "example_instance" {
+  ami             = "ami-0fd05997b4dff7aac"
+  instance_type   = "t2.micro"
+  key_name        = "terraform-linux"
+  count           = 1
+  vpc_security_group_ids = [aws_security_group.example_sg.id]
+
+  root_block_device {
+    volume_size = 8
+    volume_type = "gp2"
+  }
+
+  tags = {
+    Name = "ExampleInstance"
+  }
+}
+```
+- This resource creates an EC2 instance using the specified Amazon Machine Image (AMI) ID (`ami-0fd05997b4dff7aac`) and instance type (`t2.micro`).
+- The instance uses the SSH key `terraform-linux` for authentication.
+- The security group `example_sg` is associated with the instance (`vpc_security_group_ids`).
+- The root block device is configured with an 8 GB General Purpose SSD (`gp2`) volume.
+- The instance is tagged with the name `ExampleInstance`.
+
+### Outputs
+```hcl
+output "instance_public_ip" {
+  description = "The public IP address of the EC2 instance"
+  value       = aws_instance.example_instance[0].public_ip
+}
+
+output "instance_private_ip" {
+  description = "The private IP address of the EC2 instance"
+  value       = aws_instance.example_instance[0].private_ip
+}
+```
+- These outputs will display the **public** and **private IP addresses** of the EC2 instance once it is created.
+
+### Security Consideration:
+You should **never hardcode your `access_key` and `secret_key`** directly in the Terraform configuration file. Instead, use the following methods to manage credentials:
+- Set them in environment variables (`AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`).
+- Use an AWS credentials file (`~/.aws/credentials`).
+- Use an IAM role if Terraform is running on an AWS EC2 instance.
+
+### Improvements:
+1. **Terraform State Management:** 
+   Ensure that your state is managed securely, especially if you're working in a team. Use Terraform backends like S3 and DynamoDB for state locking.
+   
+2. **Security Group CIDR Blocks:**
+   It's generally not recommended to allow `0.0.0.0/0` for SSH (`port 22`). You might want to restrict SSH access to a specific IP or range for better security.
+
+=================================================================================================
+
+                          VARIABLES:
+
+                           variables.tf
+variable cidr {
+   default = "0.0.0.0/0"
+}
+
+
+                             Main.tf
+
+
+provider "aws" {
+  profile    = "terraform_user"
+  access_key = "AKIATG6MGP3XLRZYI7DZ"
+  secret_key = "V4FBePcbNiU2FFDPCyL7Pn1k/mvzw9cOA4pEOtX6"
+  region     = "ap-south-1"
+}
+
+resource "aws_security_group" "example_sg" {
+  name        = "example_security_group"
+  description = "Allow SSH and HTTP access"
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = [var.cidr]
+  }
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = [var.cidr]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = [var.cidr]
+  }
+}
+
+resource "aws_instance" "example_instance" {
+  ami             = "ami-0fd05997b4dff7aac"
+  instance_type   = "t2.micro"
+  key_name        = "terraform-linux"
+  count           = 1
+  vpc_security_group_ids = [aws_security_group.example_sg.id]
+
+  root_block_device {
+    volume_size = 8
+    volume_type = "gp2"
+  }
+
+  tags = {
+    Name = "ExampleInstance"
+  }
+}
+
+output "instance_public_ip" {
+  description = "The public IP address of the EC2 instance"
+  value       = aws_instance.example_instance[0].public_ip
+}
+
+output "instance_private_ip" {
+  description = "The private IP address of the EC2 instance"
+  value       = aws_instance.example_instance[0].private_ip
+}
+
+
+The Terraform configuration you provided is setting up an AWS infrastructure that consists of:
+
+1. **AWS Provider Configuration**: 
+   - Using the `terraform_user` profile for authentication.
+   - Using an access key and secret key for AWS authentication (it's important to keep these values secure, and ideally use environment variables or AWS IAM roles for production).
+   - The AWS region is set to `ap-south-1` (Asia Pacific, Mumbai).
+
+2. **Security Group (`aws_security_group`)**: 
+   - The `example_sg` security group is defined to allow inbound traffic on ports 22 (SSH) and 80 (HTTP) only from a specific CIDR range, defined by `var.cidr`.
+   - Outbound traffic is allowed to any IP on any port (`protocol = "-1"`).
+
+3. **EC2 Instance (`aws_instance`)**: 
+   - An EC2 instance is being created with the specified Amazon Machine Image (AMI), `ami-0fd05997b4dff7aac` (make sure this AMI ID is valid in the `ap-south-1` region).
+   - The instance is using the `t2.micro` type (eligible for the AWS free tier if the account qualifies).
+   - The instance is associated with the `terraform-linux` key pair (ensure this key exists and is properly configured).
+   - The instance is assigned to the security group created earlier.
+   - The root block device is configured with an 8 GB `gp2` volume.
+   - It has a tag `Name` set to `ExampleInstance`.
+
+4. **Outputs**: 
+   - Two output variables are defined:
+     - `instance_public_ip`: Outputs the public IP address of the EC2 instance.
+     - `instance_private_ip`: Outputs the private IP address of the EC2 instance.
+
+### A Few Notes:
+- **Access Keys and Secret Keys**: It is not recommended to hard-code access keys and secret keys in your Terraform configuration, as this exposes sensitive information. It's better to use environment variables (`AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`) or IAM roles (if running from an EC2 instance). Alternatively, you can use the `aws_profile` method as you've done (`profile = "terraform_user"`).
+  
+- **`var.cidr`**: The variable `var.cidr` is referenced but not defined in this configuration. You should define this variable in a `variables.tf` file or directly in your configuration.
+
+For example:
+```hcl
+variable "cidr" {
+  description = "CIDR block for access"
+  type        = string
+  default     = "0.0.0.0/0"  # This is just an example; use a more restrictive CIDR block in production
+}
+```
+
+### Security:
+- Using `0.0.0.0/0` in the `cidr_blocks` will allow unrestricted access from the public internet to your EC2 instance on the specified ports (22 for SSH, 80 for HTTP). This is acceptable for testing but is not recommended for production. Ideally, restrict access to known IP ranges for better security.
+
+=========================================================================================
+
+          TERRAFORM MODULES:
+
+         MyProject/main.tf
+
+provider "aws" {
+  profile    = "terraform_user"
+  access_key = "AKIATG6MGP3XLRZYI7DZ"
+  secret_key = "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"
+  region     = "ap-south-1"
+}
+
+module "ec2_instance" {
+    source = "./ec2-module"
+}
+     
+
+          MyProject/ec2-module/main.tf
+
+resource "aws_instance" "example" {
+  ami           = var.ami_id
+  instance_type = var.instance_type
+  key_name      = "terraform-linux"
+
+  tags = {
+    Name = "FlexibleEC2Instance"
+  }
+}
+
+
+          MyProject/ec2-module/variables.tf
+
+variable "ami_id" {
+   description = "The AMI ID to use for the instance"
+   default = "ami-0fd05997b4dff7aac"
+}
+
+variable "instance_type" {
+   description = "The Instance type"
+   default = "t2.micro"
+}
+
+
+           MyProject/ec2-module/outputs.tf
+
+output "instance_id" {
+   value = aws_instance.example.id
+}
+
+output "instance_public_ip" {
+   value = aws_instance.example.public_ip
+}
+
