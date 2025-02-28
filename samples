@@ -1,0 +1,107 @@
+provider "aws"{
+profile="terraform_user"
+access_key="AKIATG6MGP3XLRZYI7DZ"
+secret_key="V4FBePcbNiU2FFDPCyL7Pn1k/mvzw9cOA4pEOtX6"
+region="ap-south-1"
+}
+
+resource "aws_instance" "example"{
+ami="ami-0fd05997b4dff7aac"
+tags={
+Name="Linux-instance"
+}
+instance_type="t2.micro"
+key_name="terraform-linux"
+security_groups=["${aws_security_group.allow_ssh.name}"]
+}
+
+resource "aws_security_group" "allow_ssh"{
+name="allow_ssh"
+description="allow ssh traffic"
+
+ingress{
+from_port=22
+to_port=22
+protocol="tcp"
+cidr_blocks=["0.0.0.0/0"]
+}
+
+egress {
+from_port=0
+to_port=0
+protocol="-1"
+cidr_blocks=["o.0.0.0/0"]
+}
+}
+
+========================================================================================================================================
+
+
+provider "aws" {
+profile="terraform-user"
+region="ap-south-1"
+}
+
+variable "instance_names" {
+ type= list
+ default=["webserver", "dbserver", "satishserver", "giriserver"]
+ }
+
+resource "aws_security_group" "my_security_group" {
+name="ec2-security-group"
+description="allow ssh and Http"
+
+dynamic "ingress" {
+ for_each= [22,80,443,8080,9000]
+ content {
+    from_port=ingress.value
+	to_port=ingress.value
+	protocol="tcp"
+	cidr_blocks= ["0.0.0.0/0"]
+	}
+  }
+egress {
+  from_port=0
+  to_port=0
+  protocol="-1"  
+  cidr_blocks=["0.0.0.0/0"]
+  }
+}
+
+resource "aws_instance" "my_instance" {
+ami="ami-797hbhbbhy5312hgad"
+instance_type="t2.micro"
+key_name="terraform"
+count=4
+tags= {
+  Name=var.instance_names[count.index]
+  }  
+vpc_security_group_ids=[aws_security_group.my_security_group.name]
+}
+
+output "instance_public_ip" {
+description="Public instance of the ec2 instance"
+value=aws_instance.my_instance.public_ip
+}
+
+output "instance_private_ip" {
+description="Private ip of the ec2 instance"
+value=aws_instance.my_instance.private_ip
+}
+
+=======================================================================================================================================
+
+
+provider "aws" {
+region="ap-south-1"
+}
+
+resource "aws_s3_bucket" {
+bucket="myawss3bucket"
+acl="private"
+
+tags={
+Name="myawss3bucket"
+Environment="Dev"
+}
+}
