@@ -91,17 +91,19 @@ value=aws_instance.my_instance.private_ip
 
 =======================================================================================================================================
 
+# To Launch/create S3 Bucket
 
 provider "aws" {
-region="ap-south-1"
+  region = "ap-south-1"
 }
 
-resource "aws_s3_bucket" {
-bucket="myawss3bucket"
-acl="private"
+resource "aws_s3_bucket" "my_bucket" {
+  bucket = "myawss3bucket"
+  acl    = "private"
 
-tags={
-Name="myawss3bucket"
-Environment="Dev"
+  tags = {
+    Name        = "myawss3bucket"
+    Environment = "Dev"
+  }
 }
-}
+
