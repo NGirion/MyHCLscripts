@@ -98,16 +98,13 @@ provider "aws" {
 }
 
 resource "aws_s3_bucket" "my_bucket" {
-  bucket = "myawss3bucket"
+  bucket = "mybuckets3lkahvnkfhrgwsg"  # Must be globally unique
 
   tags = {
-    Name        = "myawss3bucket"
+    Name        = "mybuckets3lkahvnkfhrgwsg"
     Environment = "Dev"
   }
-}
 
-resource "aws_s3_bucket_acl" "my_bucket_acl" {
-  bucket = aws_s3_bucket.my_bucket.id
-  acl    = "private"
+  # Enforcing S3 Object Ownership without ACLs
+  object_ownership = "BucketOwnerEnforced"
 }
-
