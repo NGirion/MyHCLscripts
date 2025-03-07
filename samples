@@ -35,7 +35,7 @@ resource "aws_security_group" "allow_ssh" {
 
 
 provider "aws" {
-profile="terraform-user"
+profile="sample_user"
 region="eu-north-1"
 }
 
