@@ -86,6 +86,17 @@ description="Private ip of the ec2 instance"
 value=aws_instance.my_instance.private_ip
 }
 
+--------------------------------------------------------------------------------------------------------------------------------------
+output "instance_public_ip" {
+  description = "Public IP of the EC2 instances"
+  value = [for i in range(length(aws_instance.my_instance)) : aws_instance.my_instance[i].public_ip]
+}
+
+output "instance_private_ip" {
+  description = "Private IP of the EC2 instances"
+  value = [for i in range(length(aws_instance.my_instance)) : aws_instance.my_instance[i].private_ip]
+}
+
 =======================================================================================================================================
 
 # To Launch/create S3 Bucket
