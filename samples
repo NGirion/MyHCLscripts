@@ -97,6 +97,13 @@ output "instance_private_ip" {
   value = [for i in range(length(aws_instance.my_instance)) : aws_instance.my_instance[i].private_ip]
 }
 
+--------------------------------------------------------------------------------------------------------------------------------------
+
+# Since you're using count = 4, Terraform creates 4 EC2 instances. Therefore, to access the public_ip and private_ip attributes for each
+instance, you need to loop through the aws_instance.my_instance array.
+The range(length(aws_instance.my_instance)) expression generates a list of indices (from 0 to 3 in your case, since you have 4 instances).
+The for i in ... loop allows you to reference each instance's public_ip and private_ip.
+
 =======================================================================================================================================
 
 # To Launch/create S3 Bucket
