@@ -1,0 +1,20 @@
+provider "aws" {
+  region = "eu-north-1"
+}
+
+resource "aws_s3_bucket" "my_bucket" {
+  bucket = "mybuckets3lkahvnkfhrgwsg"  # Must be globally unique
+
+  tags = {
+    Name        = "mybuckets3lkahvnkfhrgwsg"
+    Environment = "Dev"
+  }
+}
+
+resource "aws_s3_bucket_website_configuration" "website_config" {
+  bucket = aws_s3_bucket.my_bucket.id
+
+  index_document {
+    suffix = "index.html"
+  }
+}
