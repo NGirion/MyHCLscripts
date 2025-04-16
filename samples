@@ -119,32 +119,6 @@ resource "aws_s3_bucket" "my_bucket" {
     Name        = "mybuckets3lkahvnkfhrgwsg"
     Environment = "Dev"
   }
-
-  # Enforcing S3 Object Ownership without ACLs
-  object_ownership = "BucketOwnerEnforced"
 }
 
 ==========================================================================================================================================
-
-provider "aws" {
-  region = "eu-north-1"
-}
-
-resource "aws_s3_bucket" "my_bucket" {
-  bucket = "mybuckets3lkahvnkfhrgwsg"
-
-  tags = {
-    Name = "mybuckets3lkahvnkfhrgwsg"
-  }
-
-  force_destroy = true
-}
-
-resource "aws_s3_bucket_ownership_controls" "ownership" {
-  bucket = aws_s3_bucket.my_bucket.id
-
-  rule {
-    object_ownership = "BucketOwnerEnforced"
-  }
-}
-
